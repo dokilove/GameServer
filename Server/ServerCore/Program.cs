@@ -4,71 +4,63 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-    class SpinLock
-    {
-        volatile int _locked = 0;
-        public void Acquire()
-        {
-            while (true)
-            {
-                //int original = Interlocked.Exchange(ref _locked, 1);
-                //if (original == 0)
-                //    break;
+    //class Lock
+    //{
+    //    //// bool이랑 같다고 보면되는데 커널 레벨에서의 bool
+    //    //AutoResetEvent _available = new AutoResetEvent(true);
 
-                /*
-                {
-                    내용
-                    int original = _locked;
-                    _locked = 1;
-                    if (original == 0)
-                        break;
-                }
-                */
+    //    //// auto reset 은 자동으로 닫아준다는 톨게이트 같은 느낌
+    //    //public void Acquire()
+    //    //{
+    //    //    _available.WaitOne(); // 입장시도
+    //    //    // _available.Reset(); // bool = false 수동일때
+    //    //}
 
-                // CAS Compare-And-Swap
-                /*
-                if (_locked == 0)
-                    _locked = 1;
-                */
-                int expected = 0;
-                int desired = 1;
-                if (Interlocked.CompareExchange(ref _locked, desired, expected) == expected)
-                    break;
+    //    //public void Release() 
+    //    //{
+    //    //    _available.Set(); // flag = true
+    //    //}
 
-                // 쉬다 올게~
-                //Thread.Sleep(1); // 무조건 휴식 => 무조건 1ms 정도 쉬고싶어요
-                //Thread.Sleep(0); // 조건부 양보 => 나보다 우선순위가 낮은 애들한테는 양보 불가 => 우선순위가 나보다 같거나 높은 쓰레드가 없으면 다시 본인한테
-                Thread.Yield(); // 관대한 양보 => 관대하게 양보할테니. 지금 실행이 가능한 쓰레드가 있으면 실행하세요 => 실행 가능한 애가 없으면 남은 시간 소진
-            }
-        }
+    //    ManualResetEvent _available = new ManualResetEvent(true);
 
-        public void Release() 
-        {
-            _locked = 0;
-        }
-    }
+    //    public void Acquire()
+    //    {
+    //        _available.WaitOne(); // 입장시도
+    //        // 여기에서 두단계로 나뉘어지게 되니 문제가 생긴다
+    //        _available.Reset(); // 문을 닫는다
+    //    }
+
+    //    public void Release()
+    //    {
+    //        _available.Set(); // 문을 열어준다
+    //    }
+    //}
     class Progream
     {
         static int _num = 0;
-        static SpinLock _lock = new SpinLock();
+        //static Lock _lock = new Lock();
+        static Mutex _lock = new Mutex();
 
         static void Thread_1()
         {
-            for (int i =0; i < 100000; ++i)
+            // 커널에 요청하는건 
+            // 한번만 하더라도 큰 부담이 되서 숫자를 줄임
+            // 느림
+            for (int i =0; i < 10000; ++i)
             {
-                _lock.Acquire();
+                _lock.WaitOne();
                 _num++;
-                _lock.Release();
+                _lock.ReleaseMutex();
             }
         }
 
         static void Thread_2()
         {
-            for (int i = 0; i < 100000; ++i)
+            for (int i = 0; i < 10000; ++i)
             {
-                _lock.Acquire();
+                _lock.WaitOne();
                 _num--;
-                _lock.Release();
+                _lock.ReleaseMutex();
             }
 
         }
