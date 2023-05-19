@@ -4,76 +4,66 @@ using System.Threading.Tasks;
 
 namespace ServerCore
 {
-    //class Lock
-    //{
-    //    //// bool이랑 같다고 보면되는데 커널 레벨에서의 bool
-    //    //AutoResetEvent _available = new AutoResetEvent(true);
+    class Program
+    { 
+        // 1. 근성
+        // 2. 양보
+        // 3. 갑질
 
-    //    //// auto reset 은 자동으로 닫아준다는 톨게이트 같은 느낌
-    //    //public void Acquire()
-    //    //{
-    //    //    _available.WaitOne(); // 입장시도
-    //    //    // _available.Reset(); // bool = false 수동일때
-    //    //}
+        // 상호 배제
+        // Monitor
+        static object _lock = new object();
+        static SpinLock _lock2 = new SpinLock();
+        static Mutex _lock3 = new Mutex(); // 위의 2개보다 무겁다
 
-    //    //public void Release() 
-    //    //{
-    //    //    _available.Set(); // flag = true
-    //    //}
-
-    //    ManualResetEvent _available = new ManualResetEvent(true);
-
-    //    public void Acquire()
-    //    {
-    //        _available.WaitOne(); // 입장시도
-    //        // 여기에서 두단계로 나뉘어지게 되니 문제가 생긴다
-    //        _available.Reset(); // 문을 닫는다
-    //    }
-
-    //    public void Release()
-    //    {
-    //        _available.Set(); // 문을 열어준다
-    //    }
-    //}
-    class Progream
-    {
-        static int _num = 0;
-        //static Lock _lock = new Lock();
-        static Mutex _lock = new Mutex();
-
-        static void Thread_1()
+        // 예를 들어 보상을 추가한다고 할떄
+        // [] [] [] [] []
+        class Reward
         {
-            // 커널에 요청하는건 
-            // 한번만 하더라도 큰 부담이 되서 숫자를 줄임
-            // 느림
-            for (int i =0; i < 10000; ++i)
-            {
-                _lock.WaitOne();
-                _num++;
-                _lock.ReleaseMutex();
-            }
+
         }
 
-        static void Thread_2()
-        {
-            for (int i = 0; i < 10000; ++i)
-            {
-                _lock.WaitOne();
-                _num--;
-                _lock.ReleaseMutex();
-            }
+        // RWLock ReadweWriteLock
+        static ReaderWriterLockSlim _lock4 = new ReaderWriterLockSlim();
 
+        // 99.9999%
+        static Reward GetRewardById(int id)
+        {
+            _lock4.EnterReadLock();
+
+            _lock4.ExitReadLock();
+
+            return null;
         }
+        
+        // 0.0001%
+        // 일주일에 한번 호출될까 말까
+        static void AddReward(Reward reward)
+        {
+            _lock4.EnterWriteLock();
+            _lock4.ExitWriteLock();
+        }
+
+
         static void Main(string[] args)
         {
-            Task t1 = new Task(Thread_1);
-            Task t2 = new Task(Thread_2);
-            t1.Start();
-            t2.Start();
+            lock (_lock)
+            {
 
-            Task.WaitAll(t1, t2);
+            }
 
-            Console.WriteLine(_num);
+            bool lockTaken = false;
+            try
+            {
+                _lock2.Enter(ref lockTaken);
+            }
+            finally
+            {
+                if (lockTaken)
+                {
+                    _lock2.Exit();
+                }
+            }
         }
     }
 }
