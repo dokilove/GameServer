@@ -16,8 +16,6 @@ namespace Server
 
             byte[] sendBuff = Encoding.UTF8.GetBytes("Welcome to MMORPG Server !");
             Send(sendBuff);
-            Thread.Sleep(1000);
-            Disconnect();
         }
 
         public override void OnDisconnected(EndPoint endPoint)
@@ -25,10 +23,13 @@ namespace Server
             Console.WriteLine($"OnDisconnected : {endPoint}");
         }
 
-        public override void OnRecv(ArraySegment<byte> buffer)
+        // 이동 패킷 ((3,2) 좌표로 이동하고 싶다)
+        // 15 3 2
+        public override int OnRecv(ArraySegment<byte> buffer)
         {
             string recvData = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count);
             Console.WriteLine($"[From Client] {recvData}");
+            return buffer.Count;
         }
 
         public override void OnSend(int numOfBytes)
