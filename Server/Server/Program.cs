@@ -8,28 +8,26 @@ using ServerCore;
 
 namespace Server
 {
-    class Knight
+    class Packet
     {
-        public int hp;
-        public int attack;
-        public string name;
-        public List<int> skills = new List<int>();
+        public ushort size;
+        public ushort packetId;
     }
 
-    class GameSession : Session
+    class GameSession : PacketSession
     {
         public override void OnConnected(EndPoint endPoint)
         {
             Console.WriteLine($"OnConnected : {endPoint}");
 
-            Knight knight = new Knight() { hp = 100, attack = 10 };
+            //Packet packet = new Packet() { size = 100, packetId = 10 };
 
-            ArraySegment<byte> openSegment = SendBufferHelper.Open(4096);
-            byte[] buffer = BitConverter.GetBytes(knight.hp);
-            byte[] buffer2 = BitConverter.GetBytes(knight.attack);
-            Array.Copy(buffer, 0, openSegment.Array, openSegment.Offset, buffer.Length);
-            Array.Copy(buffer2, 0, openSegment.Array, openSegment.Offset + buffer.Length, buffer2.Length);
-            ArraySegment<byte> sendBuff = SendBufferHelper.Close(buffer.Length + buffer2.Length);
+            //ArraySegment<byte> openSegment = SendBufferHelper.Open(4096);
+            //byte[] buffer = BitConverter.GetBytes(packet.size);
+            //byte[] buffer2 = BitConverter.GetBytes(packet.packetId);
+            //Array.Copy(buffer, 0, openSegment.Array, openSegment.Offset, buffer.Length);
+            //Array.Copy(buffer2, 0, openSegment.Array, openSegment.Offset + buffer.Length, buffer2.Length);
+            //ArraySegment<byte> sendBuff = SendBufferHelper.Close(buffer.Length + buffer2.Length);
 
 
             // 100명한테 보낼 때
@@ -37,23 +35,21 @@ namespace Server
             // 100 -> 이동패킷이 100 * 100 = 1만
             // recv처럼 session이 안고있으면 100번의 복사가 일어나니 
             // 버퍼를 여기에서 만들어서 for문으로 보내는게 낫다
-            Send(sendBuff);
-            Thread.Sleep(1000);
-            Disconnect();   
+            //Send(sendBuff);
+            Thread.Sleep(5000);
+            Disconnect();
+        }
+
+        public override void OnRecvPacket(ArraySegment<byte> buffer)
+        {
+            ushort size = BitConverter.ToUInt16(buffer.Array, buffer.Offset);
+            ushort id = BitConverter.ToUInt16(buffer.Array, buffer.Offset + 2);
+            Console.WriteLine($"RecvPAcketID: {id}, size {size}");
         }
 
         public override void OnDisconnected(EndPoint endPoint)
         {
             Console.WriteLine($"OnDisconnected : {endPoint}");
-        }
-
-        // 이동 패킷 ((3,2) 좌표로 이동하고 싶다)
-        // 15 3 2
-        public override int OnRecv(ArraySegment<byte> buffer)
-        {
-            string recvData = Encoding.UTF8.GetString(buffer.Array, buffer.Offset, buffer.Count);
-            Console.WriteLine($"[From Client] {recvData}");
-            return buffer.Count;
         }
 
         public override void OnSend(int numOfBytes)
