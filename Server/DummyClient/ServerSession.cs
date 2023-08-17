@@ -1,23 +1,55 @@
-﻿using ServerCore;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
+using System.Net;
+using ServerCore;
+using System.Linq;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 namespace DummyClient
 {
+
+
+    public enum PacketID
+    {
+        PlayerInfoReq = 1,
+        Test = 2,
+
+    }
+
+
     class PlayerInfoReq
     {
+        public byte testByte;
         public long playerId;
         public string name;
-        public struct Skill
+        public class Skill
         {
             public int id;
             public short level;
             public float duration;
+            public class Attribute
+            {
+                public int att;
+
+                public void Read(ReadOnlySpan<byte> s, ref ushort count)
+                {
+                    this.att = BitConverter.ToInt32(s.Slice(count, s.Length - count));
+                    count += sizeof(int);
+
+                }
+
+                public bool Write(Span<byte> s, ref ushort count)
+                {
+                    bool success = true;
+                    success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.att);
+                    count += sizeof(int);
+
+                    return success;
+                }
+            }
+            public List<Attribute> attributes = new List<Attribute>();
 
             public void Read(ReadOnlySpan<byte> s, ref ushort count)
             {
@@ -30,6 +62,16 @@ namespace DummyClient
                 this.duration = BitConverter.ToSingle(s.Slice(count, s.Length - count));
                 count += sizeof(float);
 
+                this.attributes.Clear();
+                ushort attributeLen = BitConverter.ToUInt16(s.Slice(count, s.Length - count));
+                count += sizeof(ushort);
+                attributes.Clear();
+                for (int i = 0; i < attributeLen; i++)
+                {
+                    Attribute attribute = new Attribute();
+                    attribute.Read(s, ref count);
+                    attributes.Add(attribute);
+                }
             }
 
             public bool Write(Span<byte> s, ref ushort count)
@@ -44,6 +86,10 @@ namespace DummyClient
                 success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.duration);
                 count += sizeof(float);
 
+                success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)this.attributes.Count);
+                count += sizeof(ushort);
+                foreach (Attribute attribute in attributes)
+                    success &= attribute.Write(s, ref count);
                 return success;
             }
         }
@@ -56,6 +102,8 @@ namespace DummyClient
             ReadOnlySpan<byte> s = new ReadOnlySpan<byte>(segment.Array, segment.Offset, segment.Count);
             count += sizeof(ushort);
             count += sizeof(ushort);
+            this.testByte = (byte)segment.Array[segment.Offset + count];
+            count += sizeof(byte);
             this.playerId = BitConverter.ToInt64(s.Slice(count, s.Length - count));
             count += sizeof(long);
 
@@ -87,6 +135,8 @@ namespace DummyClient
             count += sizeof(ushort);
             success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)PacketID.PlayerInfoReq);
             count += sizeof(ushort);
+            segment.Array[segment.Offset + count] = (byte)this.testByte;
+            count += sizeof(byte);
             success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), this.playerId);
             count += sizeof(long);
 
@@ -106,12 +156,6 @@ namespace DummyClient
         }
     }
 
-    public enum PacketID
-    {
-        PlayerInfoReq = 1,
-        PlayerInfoOk = 2,
-    }
-
     class ServerSession : Session
     {
         public override void OnConnected(EndPoint endPoint)
@@ -119,7 +163,10 @@ namespace DummyClient
             Console.WriteLine($"OnConnected : {endPoint}");
 
             PlayerInfoReq packet = new PlayerInfoReq() { playerId = 1001, name = "ABCD" };
-            packet.skills.Add(new PlayerInfoReq.Skill() { id = 101, level = 1, duration = 3.0f,  });
+            var skill = new PlayerInfoReq.Skill() { id = 101, level = 1, duration = 3.0f, };
+            skill.attributes.Add(new PlayerInfoReq.Skill.Attribute() { att = 77 });
+            packet.skills.Add(skill);
+
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 201, level = 2, duration = 4.0f, });
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 301, level = 3, duration = 5.0f, });
             packet.skills.Add(new PlayerInfoReq.Skill() { id = 401, level = 4, duration = 6.0f, });

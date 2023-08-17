@@ -5,6 +5,8 @@ namespace PacketGanerator
     internal class Program
     {
         static string genPackets;
+        static ushort packetId;
+        static string packetEnums;
 
         static void Main(string[] args)
         {
@@ -26,7 +28,9 @@ namespace PacketGanerator
                     //Console.WriteLine(r.Name + " " + r["name"]);
                 }
 
-                File.WriteAllText("GenPacket.cs", genPackets);
+
+                string fileText =  string.Format(PacketFormat.fileFormat, packetEnums, genPackets);
+                File.WriteAllText("GenPacket.cs", fileText);
             }
         }
 
@@ -51,6 +55,7 @@ namespace PacketGanerator
             Tuple<string, string, string>  t = ParseMembers(r);
             genPackets += string.Format(PacketFormat.packetFormat,
                 packetName, t.Item1, t.Item2, t.Item3);
+            packetEnums += string.Format(PacketFormat.packetEnumFormat, packetName, ++packetId) + Environment.NewLine + "\t";
         }
 
         // {1} 멤버 변수
@@ -87,8 +92,13 @@ namespace PacketGanerator
                 string memberType = r.Name.ToLower();
                 switch(memberType)
                 {
-                    case "bool":
                     case "byte":
+                    case "sbyte":
+                        memberCode += string.Format(PacketFormat.memberFormat, memberType, memberName);
+                        readCode += string.Format(PacketFormat.readByteFormat, memberName, memberType);
+                        writeCode += string.Format(PacketFormat.writeByteFormat, memberName, memberType);
+                        break;
+                    case "bool":
                     case "short":
                     case "ushort":
                     case "int":
