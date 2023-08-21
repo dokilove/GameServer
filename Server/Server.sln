@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ServerCore", "ServerCore\Se
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DummyClient", "DummyClient\DummyClient.csproj", "{E28475C6-57BF-4BA2-AF4E-D8ECB48A6F2C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PacketGanerator", "PacketGanerator\PacketGanerator.csproj", "{A60B7F61-B002-430E-81AA-024E2E943822}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PacketGenerator", "PacketGanerator\PacketGenerator.csproj", "{A60B7F61-B002-430E-81AA-024E2E943822}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{FF065F74-243F-496A-9A5E-007D279E7D54}"
 EndProject
