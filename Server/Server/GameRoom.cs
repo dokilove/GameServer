@@ -16,15 +16,13 @@ namespace Server
         {
             S_Chat packet = new S_Chat();
             packet.playerId = session.SessionId;
-            packet.chat = chat;
+            packet.chat = $"{chat} I am {packet.playerId}";
             ArraySegment<byte> segment = packet.Write();
 
             lock (_lock)
             {
                 foreach(ClientSession s in _sessions)
-                {
-                    s.Send(segment);
-                }
+                    s.Send(segment);                
             }
         }
         public void Enter(ClientSession session)
