@@ -10,12 +10,12 @@ namespace PacketGanerator
     internal class PacketFormat
     {
         // {0} 패킷 등록
-        public static string managerFormat =
+        public static string managerFormat = 
 @"using ServerCore;
 using System;
 using System.Collections.Generic;
 
-class PacketManager
+public class PacketManager
 {{
     #region Singleton
     static PacketManager _instance = new PacketManager();
@@ -110,7 +110,7 @@ public interface IPacket
         // {3} 멤버 변수 Write
         public static string packetFormat =
 @"
-class {0} : IPacket
+public class {0} : IPacket
 {{
     {1}
 
@@ -203,7 +203,7 @@ count += sizeof(ushort);
 for (int i = 0; i < {1}Len; i++) 
 {{ 
     {0} {1} = new {0}();
-    {1}.Read(s, ref count);
+    {1}.Read(segment, ref count);
     {1}s.Add({1});
 }}";
 
@@ -234,7 +234,7 @@ count += {0}Len;
 @"Array.Copy(BitConverter.GetBytes((ushort)this.{1}s.Count), 0, segment.Array, segment.Offset + count, sizeof(ushort));
 count += sizeof(ushort);
 foreach({0} {1} in {1}s)            
-    success &= {1}.Write(segment, ref count);  ";
+    {1}.Write(segment, ref count);  ";
 
     }
 }
